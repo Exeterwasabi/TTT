@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANAHEIM ELECTRONICS | 機動戰士鋼彈戰術資料庫</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070b12;
+      --bg-panel: rgba(13, 21, 35, 0.85);
+      --primary: #00e5ff;
+      --primary-dim: rgba(0, 229, 255, 0.15);
+      --secondary: #f5b700;
+      --danger: #ff2a4b;
+      --text-main: #e2e8f0;
+      --text-muted: #8496ae;
+      --border-color: rgba(0, 229, 255, 0.35);
+      --glow: 0 0 15px rgba(0, 229, 255, 0.4);
+    }
+
+    /* NT-D Destroy Mode 色彩主題 */
+    body.ntd-mode {
+      --primary: #ff1e42;
+      --primary-dim: rgba(255, 30, 66, 0.18);
+      --secondary: #ff9e00;
+      --border-color: rgba(255, 30, 66, 0.5);
+      --glow: 0 0 20px rgba(255, 30, 66, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Noto Sans TC', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      transition: all 0.4s ease;
+    }
+
+    body.ntd-mode {
+      background-image:
+        linear-gradient(rgba(255, 30, 66, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 30, 66, 0.06) 1px, transparent 1px);
+    }
+
+    /* 螢幕掃描線特效 */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.18) 3px
+      );
+      z-index: 999;
+    }
+
+    .mono {
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .orbitron {
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    /* 頂部 HUD 導覽列 */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 11, 18, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: var(--primary);
+      color: #000;
+      font-weight: 900;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+      transition: background 0.4s;
+    }
+
+    .brand h1 {
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      color: var(--primary);
+      text-shadow: var(--glow);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .status-pill {
+      font-size: 0.8rem;
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+      padding: 5px 12px;
+      background: var(--primary-dim);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: var(--glow);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .ntd-btn {
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 8px 16px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    }
+
+    .ntd-btn:hover {
+      background: var(--primary);
+      color: #000;
+      box-shadow: var(--glow);
+    }
+
+    /* 主容器 */
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 5%;
+    }
+
+    /* Hero 戰術簡報區 */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 2rem;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      background: var(--bg-panel);
+      padding: 2.5rem;
+      position: relative;
+      margin-bottom: 2.5rem;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .hero::before, .hero::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--primary);
+    }
+    .hero::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+    .hero::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+    .hero-tag {
+      color: var(--secondary);
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+
+    .hero h2 {
+      font-size: 2.4rem;
+      line-height: 1.25;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-metrics {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .metric-box {
+      border-left: 3px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    .metric-box .label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .metric-box .val {
+      font-size: 1.2rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* 動態雷達 & 機體線圖框 */
+    .radar-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      padding: 1.5rem;
+      position: relative;
+      min-height: 280px;
+    }
+
+    .radar-circle {
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      border: 1px dashed var(--border-color);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, var(--primary-dim) 0deg, transparent 70deg);
+      animation: spin 4s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .hero-svg {
+      width: 130px;
+      height: 130px;
+      z-index: 2;
+      filter: drop-shadow(0 0 8px var(--primary));
+      transition: filter 0.4s;
+    }
+
+    /* 篩選器 */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.8rem;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.25s;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-dim);
+    }
+
+    /* 機體格納庫與詳細檢視雙欄 */
+    .hangar-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .ms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1rem;
+    }
+
+    .ms-card {
+      background: var(--bg-panel);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 1.2rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ms-card:hover, .ms-card.selected {
+      border-color: var(--primary);
+      box-shadow: var(--glow);
+      transform: translateY(-3px);
+    }
+
+    .ms-card.selected::before {
+      content: 'ACTIVE';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 0.65rem;
+      font-family: 'Share Tech Mono', monospace;
+      background: var(--primary);
+      color: #000;
+      padding: 2px 6px;
+      font-weight: bold;
+    }
+
+    .ms-code {
+      font-size: 0.78rem;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .ms-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .ms-faction {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: inline-block;
+      padding: 2px 8px;
+    }
+
+    /* 右側戰術規格面板 */
+    .detail-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      padding: 1.8rem;
+      position: sticky;
+      top: 90px;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .detail-svg-box {
+      width: 72px;
+      height: 72px;
+      border: 1px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.88rem;
+    }
+
+    .spec-item span {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .stat-row {
+      margin-bottom: 0.9rem;
+    }
+
+    .stat-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
+    .stat-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      box-shadow: var(--glow);
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .weapons-list {
+      margin-top: 1.2rem;
+      padding-top: 1rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+
+    .weapons-list h4 {
+      font-size: 0.85rem;
+      color: var(--secondary);
+      margin-bottom: 0.6rem;
+    }
+
+    .weapon-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .weapon-tag {
+      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 2px solid var(--primary);
+      padding: 4px 10px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 5%;
+      margin-top: 3rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 900px) {
+      .hero, .hangar-layout {
+        grid-template-columns: 1fr;
+      }
+      .hero h2 { font-size: 1.8rem; }
+      .detail-panel { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanlines"></div>
+
+  <header>
+    <div class="brand">
+      <div class="brand-badge orbitron">AE // OS</div>
+      <h1 class="orbitron">MOBILE SUIT DATABASE</h1>
+    </div>
+    <div class="header-controls">
+      <div class="status-pill mono">
+        <span class="pulse-dot"></span>
+        <span id="sysStatusText">SYSTEM: NORMAL</span>
+      </div>
+      <button class="ntd-btn" id="ntdToggleBtn" onclick="toggleNTD()">
+        ACTIVATE NT-D
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div>
+        <span class="hero-tag mono">// U.C. 0079 - C.E. 73 TACTICAL ARCHIVE</span>
+        <h2>機動戰士鋼彈<br><span style="color: var(--primary);">戰術規格檢索系統</span></h2>
+        <p>
+          歡迎連線至亞納海姆電子公司（Anaheim Electronics）機密格納庫資料庫。
+          點擊下方任一機動戰士（Mobile Suit）卡片，即可即時載入駕駛員檔案、動力輸出與戰鬥性能分析。
+        </p>
+        <div class="hero-metrics">
+          <div class="metric-box">
+            <div class="label mono">MINOVSKY PARTICLES</div>
+            <div class="val mono" id="minovskyVal">14.82 MHz</div>
+          </div>
+          <div class="metric-box">
+            <div class="label mono">REGISTERED UNITS</div>
+            <div class="val mono">04 MS</div>
+          </div>
+          <div class="metric-box">
+            <div class="label mono">DEPLOYMENT</div>
+            <div class="val mono">GITHUB + VERCEL</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="radar-panel">
+        <div class="radar-circle">
+          <div class="radar-sweep"></div>
+          <!-- 動態機體 SVG -->
+          <svg class="hero-svg" viewBox="0 0 100 100" fill="none" stroke="var(--primary)" stroke-width="2">
+            <!-- Gundam Stylized Head / V-Fin -->
+            <polygon points="50,38 12,15 44,46" fill="var(--primary-dim)" />
+            <polygon points="50,38 88,15 56,46" fill="var(--primary-dim)" />
+            <polygon points="50,24 44,44 56,44" fill="var(--secondary)" stroke="var(--secondary)" />
+            <path d="M32 45 L68 45 L64 78 L50 86 L36 78 Z" fill="rgba(0,0,0,0.6)" />
+            <polygon points="36,54 47,57 45,62 37,60" fill="var(--secondary)" stroke="none" />
+            <polygon points="64,54 53,57 55,62 63,60" fill="var(--secondary)" stroke="none" />
+            <path d="M42 70 L58 70 M44 75 L56 75" stroke-width="1.5" />
+          </svg>
+        </div>
+        <div class="mono" style="margin-top: 12px; font-size: 0.78rem; color: var(--primary);">
+          TARGET LOCK: RX-SERIES CORE
+        </div>
+      </div>
+    </section>
+
+    <!-- 格納庫列表與細節面板 -->
+    <div class="section-header">
+      <h3 class="orbitron" style="letter-spacing: 1px;">MS HANGAR // 機體格納庫</h3>
+      <div class="filter-group">
+        <button class="filter-btn active" onclick="filterMS('ALL', this)">全部機體</button>
+        <button class="filter-btn" onclick="filterMS('EFSF', this)">地球聯邦軍 (E.F.S.F.)</button>
+        <button class="filter-btn" onclick="filterMS('ZEON', this)">吉翁公國 (ZEON)</button>
+        <button class="filter-btn" onclick="filterMS('ZAFT', this)">奧布 / Z.A.F.T.</button>
+      </div>
+    </div>
+
+    <div class="hangar-layout">
+      <div class="ms-grid" id="msGrid"></div>
+
+      <aside class="detail-panel" id="detailPanel">
+        <!-- 由 JS 動態渲染 -->
+      </aside>
+    </div>
+  </main>
+
+  <footer class="mono">
+    ANAHEIM ELECTRONICS TACTICAL TERMINAL // READY FOR GITHUB & VERCEL DEPLOYMENT
+  </footer>
+
+  <script>
+    const mobileSuits = [
+      {
+        id: 'rx78',
+        code: 'RX-78-2',
+        name: '初代鋼彈 (Gundam)',
+        faction: 'EFSF',
+        factionLabel: '地球聯邦軍 E.F.S.F.',
+        pilot: '阿姆羅·雷 (Amuro Ray)',
+        era: 'U.C. 0079',
+        height: '18.0 m',
+        weight: '43.4 t (本體)',
+        reactor: '1,380 kW',
+        desc: 'V作戰計畫開發的實驗性泛用型機動戰士，採用月神鈦合金裝甲與教育型電腦，在一年戰爭中創下壓倒性戰果。',
+        stats: { firepower: 82, mobility: 80, armor: 88, output: 78 },
+        weapons: ['光束步槍', '光束軍刀 x2', '60mm 火神砲', '超絕火箭砲', '鋼彈專用盾牌'],
+        svgType: 'gundam'
+      },
+      {
+        id: 'zaku2s',
+        code: 'MS-06S',
+        name: '夏亞專用薩克 II',
+        faction: 'ZEON',
+        factionLabel: '吉翁公國 ZEON',
+        pilot: '夏亞·阿茲納布爾 (Char Aznable)',
+        era: 'U.C. 0079',
+        height: '17.5 m',
+        weight: '56.2 t',
+        reactor: '976 kW',
+        desc: '指揮官特化機型，推進器出力比一般型提升 30%，以「紅色彗星」的驚人機動力聞名於魯ウム戰役。',
+        stats: { firepower: 70, mobility: 92, armor: 68, output: 72 },
+        weapons: ['120mm 薩克機槍', '280mm 薩克火箭砲', '熱能斧 (Heat Hawk)', '指揮官天線'],
+        svgType: 'zaku'
+      },
+      {
+        id: 'unicorn',
+        code: 'RX-0',
+        name: '獨角獸鋼彈 (Unicorn)',
+        faction: 'EFSF',
+        factionLabel: '地球聯邦 / 畢斯特財團',
+        pilot: '巴納吉·林克斯 (Banagher Links)',
+        era: 'U.C. 0096',
+        height: '19.7 m / 21.7 m',
+        weight: '23.7 t',
+        reactor: '3,480 kW',
+        desc: '全身搭載「精神感應框架」的試作機。發動 NT-D 系統後裝甲展開並發出紅光，發揮超越常理的反應速度。',
+        stats: { firepower: 95, mobility: 98, armor: 90, output: 100 },
+        weapons: ['光束麥格農 (Beam Magnum)', '光束拐 (Beam Tonfa)', '超絕光束戟', 'I力場護盾'],
+        svgType: 'unicorn'
+      },
+      {
+        id: 'strike_freedom',
+        code: 'ZGMF-X20A',
+        name: '攻擊自由鋼彈',
+        faction: 'ZAFT',
+        factionLabel: '奧布 / 永恆號所屬',
+        pilot: '煌·大和 (Kira Yamato)',
+        era: 'C.E. 73',
+        height: '18.88 m',
+        weight: '80.09 t',
+        reactor: '核能引擎 (Hyper-Deuterion)',
+        desc: '搭載超級龍騎兵系統與高機動「光輝傳遞者」光之翼，具備極高火力壓制能力與全方位空間制壓性能。',
+        stats: { firepower: 100, mobility: 97, armor: 84, output: 99 },
+        weapons: ['高能量光束步槍 x2', '超級龍騎兵 x8', '腹部複相光束砲', '旗魚3磁軌砲'],
+        svgType: 'freedom'
+      }
+    ];
+
+    let currentFilter = 'ALL';
+    let selectedId = 'rx78';
+
+    function getSvgIcon(type) {
+      if (type === 'zaku') {
+        return `<svg viewBox="0 0 100 100" width="52" height="52" fill="none" stroke="var(--primary)" stroke-width="2.5">
+          <path d="M25 65 C25 30, 75 30, 75 65 L82 78 L18 78 Z" fill="rgba(0,0,0,0.4)"/>
+          <line x1="50" y1="15" x2="50" y2="33" stroke="var(--secondary)" stroke-width="3"/>
+          <rect x="26" y="48" width="48" height="12" fill="#000"/>
+          <circle cx="58" cy="54" r="5" fill="#ff2a4b" stroke="none"/>
+          <path d="M22 68 Q50 85 78 68" stroke-width="4" stroke-dasharray="5 3"/>
+        </svg>`;
+      }
+      if (type === 'unicorn') {
+        return `<svg viewBox="0 0 100 100" width="52" height="52" fill="none" stroke="var(--primary)" stroke-width="2.2">
+          <polygon points="50,35 15,12 45,45" fill="var(--primary-dim)"/>
+          <polygon points="50,35 85,12 55,45" fill="var(--primary-dim)"/>
+          <path d="M34 45 L66 45 L60 82 L50 88 L40 82 Z" fill="rgba(0,0,0,0.5)"/>
+          <rect x="38" y="54" width="24" height="6" fill="var(--primary)" stroke="none"/>
+          <line x1="50" y1="62" x2="50" y2="85" stroke="var(--primary)"/>
+        </svg>`;
+      }
+      return `<svg viewBox="0 0 100 100" width="52" height="52" fill="none" stroke="var(--primary)" stroke-width="2.2">
+        <polygon points="50,38 12,18 44,46" fill="var(--primary-dim)"/>
+        <polygon points="50,38 88,18 56,46" fill="var(--primary-dim)"/>
+        <polygon points="50,24 45,44 55,44" fill="var(--secondary)" stroke="var(--secondary)"/>
+        <path d="M32 46 L68 46 L63 78 L50 86 L37 78 Z" fill="rgba(0,0,0,0.5)"/>
+        <polygon points="37,55 47,57 45,61 38,60" fill="var(--secondary)" stroke="none"/>
+        <polygon points="63,55 53,57 55,61 62,60" fill="var(--secondary)" stroke="none"/>
+      </svg>`;
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('msGrid');
+      const filtered = currentFilter === 'ALL'
+        ? mobileSuits
+        : mobileSuits.filter(ms => ms.faction === currentFilter);
+
+      grid.innerHTML = filtered.map(ms => `
+        <div class="ms-card ${ms.id === selectedId ? 'selected' : ''}" onclick="selectMS('${ms.id}')">
+          <div class="ms-code mono">${ms.code} // ${ms.era}</div>
+          <div class="ms-name">${ms.name}</div>
+          <div class="ms-faction mono">${ms.factionLabel}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderDetail() {
+      const ms = mobileSuits.find(m => m.id === selectedId) || mobileSuits[0];
+      const panel = document.getElementById('detailPanel');
+
+      panel.innerHTML = `
+        <div class="detail-header">
+          <div>
+            <div class="mono" style="color: var(--primary); font-size: 0.85rem;">${ms.code} // ${ms.era}</div>
+            <h3 style="font-size: 1.5rem; margin-top: 4px;">${ms.name}</h3>
+            <div style="font-size: 0.85rem; color: var(--secondary); margin-top: 4px;">駕駛員：${ms.pilot}</div>
+          </div>
+          <div class="detail-svg-box">${getSvgIcon(ms.svgType)}</div>
+        </div>
+
+        <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.2rem;">
+          ${ms.desc}
+        </p>
+
+        <div class="specs-grid mono">
+          <div class="spec-item"><span>HEIGHT (全高)</span>${ms.height}</div>
+          <div class="spec-item"><span>WEIGHT (重量)</span>${ms.weight}</div>
+          <div class="spec-item"><span>REACTOR (出力)</span>${ms.reactor}</div>
+          <div class="spec-item"><span>AFFILIATION</span>${ms.faction}</div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-label mono"><span>FIREPOWER (火力)</span><span>${ms.stats.firepower}%</span></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${ms.stats.firepower}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label mono"><span>MOBILITY (機動力)</span><span>${ms.stats.mobility}%</span></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${ms.stats.mobility}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label mono"><span>ARMOR (裝甲強度)</span><span>${ms.stats.armor}%</span></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${ms.stats.armor}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label mono"><span>GENERATOR (反應爐出力)</span><span>${ms.stats.output}%</span></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${ms.stats.output}%"></div></div>
+        </div>
+
+        <div class="weapons-list">
+          <h4 class="mono">ARMAMENTS // 主要武裝</h4>
+          <div class="weapon-tags">
+            ${ms.weapons.map(w => `<span class="weapon-tag">${w}</span>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function selectMS(id) {
+      selectedId = id;
+      renderGrid();
+      renderDetail();
+    }
+
+    function filterMS(faction, btn) {
+      currentFilter = faction;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderGrid();
+    }
+
+    function toggleNTD() {
+      const body = document.body;
+      const btn = document.getElementById('ntdToggleBtn');
+      const statusText = document.getElementById('sysStatusText');
+      const isNTD = body.classList.toggle('ntd-mode');
+
+      if (isNTD) {
+        btn.textContent = 'DEACTIVATE NT-D';
+        statusText.textContent = 'SYSTEM: NT-D DESTROY MODE';
+      } else {
+        btn.textContent = 'ACTIVATE NT-D';
+        statusText.textContent = 'SYSTEM: NORMAL';
+      }
+    }
+
+    // 模擬米諾夫斯基粒子即時波動
+    setInterval(() => {
+      const base = document.body.classList.contains('ntd-mode') ? 88.0 : 14.5;
+      const val = (base + Math.random() * 1.9).toFixed(2);
+      document.getElementById('minovskyVal').textContent = `${val} MHz`;
+    }, 1800);
+
+    // 初始化渲染
+    renderGrid();
+    renderDetail();
+  </script>
+</body>
+</html>
